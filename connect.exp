@@ -1,0 +1,17 @@
+#!/usr/bin/expect
+
+set host [lindex $argv 0]
+set country [string range $host 0 1]
+set store [string range $host 0 5]
+
+# check type of host by first two chars
+set hostType [string range $host 0 1]
+
+if {$hostType == "P1" || $hostType == "p1"} {
+spawn ssh $host
+} else {
+spawn ssh $host.$store.$country
+}
+
+expect "Password: " {send -- "password\r"}
+interact "sop" {send "cd /path/to/target/folder\r"}
