@@ -1,0 +1,52 @@
+#!/usr/bin/expect
+
+# Download types
+# key -t for log files from the client
+# key -e for other log files from the client
+# key -s for log files from the server
+# key -c for log files from central server
+# key -o for all other paths
+
+# USAGE
+# for predefined paths:
+# download.exp -download_type host filename
+#
+# for custom path:
+# download.exp -o host full_path_filename
+
+set download_type [lindex $argv 0]
+set host [lindex $argv 1]
+set file [lindex $argv 2]
+
+set pos_path_logs "/path/to/client/logs"
+set pos_path_eps "/path/to/other/client/logs"
+set server_path "/path/to/server/logs"
+set cluster_path "/path/to/central/server/logs"
+
+set store [string range $host 0 5]
+set country [string range $host 0 1]
+set host_type [string range $host 0 1]
+
+file mkdir /home/user/$host
+
+switch $download_type {
+    "-t" { spawn scp -C user@$host.$store.$country:$pos_path_logs$file /home/user/$host/ }
+    "-e" { spawn scp -C user@$host.$store.$country:$pos_path_eps$file /home/user/$host/ }
+    "-s" { spawn scp -C user@$host.$store.$country:$server_path$file /home/user/$host/ }
+    "-c" { spawn scp -C user@$host:$cluster_path$file /home/user/$host/ }
+    "-o" {
+        if {$host_type == "P1" || $host_type == "p1"} {
+            spawn scp -C user@$host:[lindex $argv 2] /home/user/$host/
+        } else {
+            spawn scp -C user@$host.$store.$country:[lindex $argv 2] /home/user/$host/
+        }
+    }
+    default {
+        puts "Arguments are incorrect. See usage.\n"
+        break
+    }
+}
+
+expect "yes/no)" {send "yes\r"; exp_continue} "assword: "
+send "password\r"
+interact
